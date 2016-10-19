@@ -30,48 +30,45 @@ class SHT31(object):
         given address.
         """
         if i2c == None or i2c.__class__ != I2C:
-            raise Exception('I2C object needed as argument!')
+            raise ValueError('I2C object needed as argument!')
         self._i2c = i2c
         self._addr = addr
 
     def _send(self, buf):
         """
-        Sends the given bufer object over I2C to the sensor.
+        Sends the given buffer object over I2C to the sensor.
         """
-        self._i2c.send(buf, self._addr)
+        self._i2c.writeto(self._addr, buf)
 
-    def _recv(self, n=2):
+    def _recv(self, count):
         """
         Read bytes from the sensor using I2C. The byte count can be specified
-        as an argument. Default is to receive two bytes.
+        as an argument.
         Returns a bytearray for the result.
         """
-        return self._i2c.recv(n, self._addr)
+        return self._i2c.readfrom(self._addr, count)
 
-    def _read_raw(self, r=R_HIGH, cs=True):
+    def _raw_temp_humi(self, r=R_HIGH, cs=True):
         """
         Read the raw temperature and humidity from the sensor and skips CRC
         checking.
         Returns a tuple for both values in that order.
         """
         if r not in (R_HIGH, R_MEDIUM, R_LOW):
-            raise Exception('Wrong repeatabillity value given!')
+            raise ValueError('Wrong repeatabillity value given!')
         self._send(self._map_cs_r[cs][r])
         raw = self._recv(6)
         return (raw[0] << 8) + raw[1], (raw[3] << 8) + raw[4]
 
-    def read_c(self, r=R_HIGH, cs=True):
+    def get_temp_humi(self, resolution=R_HIGH, clock_stretch=True, celsius=True):
         """
-        Read the temperature in degree celsius and relative humidity.
+        Read the temperature in degree celsius or fahrenheit and relative
+        humidity. Resolution and clock stretching can be specified.
         Returns a tuple for both values in that order.
         """
-        t, h = self._read_raw(r, cs)
-        return -45 + (175 * (t / 65535)), 100 * (h / 65535)
-
-    def read_f(self, r=R_HIGH, cs=True):
-        """
-        Read the temperature in degree fahrenheit and relative humidity.
-        Returns a tuple for both values in that order.
-        """
-        t, h = self._read_raw(r, cs)
-        return -49 + (315 * (t / 65535)), 100 * (h / 65535)
+        t, h = self._raw_temp_humi(resolution, clock_stretch)
+        if celsius:
+            temp = -45 + (175 * (t / 65535))
+        else:
+            temp = -49 + (315 * (t / 65535))
+        return temp, 100 * (h / 65535)
