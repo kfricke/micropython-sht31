@@ -1,4 +1,5 @@
 from machine import I2C
+import time
 
 R_HIGH   = const(1)
 R_MEDIUM = const(2)
@@ -57,6 +58,7 @@ class SHT31(object):
         if r not in (R_HIGH, R_MEDIUM, R_LOW):
             raise ValueError('Wrong repeatabillity value given!')
         self._send(self._map_cs_r[cs][r])
+        time.sleep_ms(50)
         raw = self._recv(6)
         return (raw[0] << 8) + raw[1], (raw[3] << 8) + raw[4]
 
