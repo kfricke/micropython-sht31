@@ -30,7 +30,7 @@ class SHT31(object):
         Initialize a sensor object on the given I2C bus and accessed by the
         given address.
         """
-        if i2c == None or i2c.__class__ != I2C:
+        if i2c == None:
             raise ValueError('I2C object needed as argument!')
         self._i2c = i2c
         self._addr = addr
