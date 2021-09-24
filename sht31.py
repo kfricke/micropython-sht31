@@ -49,17 +49,33 @@ class SHT31(object):
         """
         return self._i2c.readfrom(self._addr, count)
 
+    def _crc8(self, buf):
+	    crc = 0xFF
+	    for c in buf:
+		    crc ^= c
+		    for _ in range(8):
+			    if crc & 0x80:
+				    crc = (crc << 1) ^ 0x131
+    			else:
+	    			crc <<= 1
+	    return crc
+
     def _raw_temp_humi(self, r=R_HIGH, cs=True):
         """
-        Read the raw temperature and humidity from the sensor and skips CRC
+        Read the raw temperature and humidity from the sensor and do CRC
         checking.
         Returns a tuple for both values in that order.
         """
         if r not in (R_HIGH, R_MEDIUM, R_LOW):
             raise ValueError('Wrong repeatabillity value given!')
+
         self._send(self._map_cs_r[cs][r])
         time.sleep_ms(50)
         raw = self._recv(6)
+
+        if self._crc([raw[0], raw[1]]) != raw[2] or self._crc([raw[3], raw[4]]) != raw[5]
+            raise ValueError('Incorrect CRC checksum!')
+
         return (raw[0] << 8) + raw[1], (raw[3] << 8) + raw[4]
 
     def get_temp_humi(self, resolution=R_HIGH, clock_stretch=True, celsius=True):
