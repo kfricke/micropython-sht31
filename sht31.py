@@ -73,7 +73,7 @@ class SHT31(object):
         time.sleep_ms(50)
         raw = self._recv(6)
 
-        if self._crc([raw[0], raw[1]]) != raw[2] or self._crc([raw[3], raw[4]]) != raw[5]
+        if self._crc([raw[0], raw[1]]) != raw[2] or self._crc([raw[3], raw[4]]) != raw[5]:
             raise ValueError('Incorrect CRC checksum!')
 
         return (raw[0] << 8) + raw[1], (raw[3] << 8) + raw[4]
